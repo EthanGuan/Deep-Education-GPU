@@ -20,7 +20,7 @@ if __name__ == "__main__":
     #g_start = datetime.datetime.now()
 
     ingestion_flag = gone.enumGraph.eDdir | gone.enumGraph.eDoubleEdge 
-    ifile = "/home/datalab/data/pubmed/graph_structure"
+    ifile = "../pubmed/graph_structure"
     num_vcount = 19717
     cuda = torch.device('cuda')
     g_start = datetime.datetime.now()
@@ -31,11 +31,11 @@ if __name__ == "__main__":
     diff = g_end - g_start
     print ('graph creation time is:', diff)
     
-    feature = pubmed_util.read_feature_info("/home/datalab/data/pubmed/feature/feature.txt")
-    train_id = pubmed_util.read_index_info("/home/datalab/data/pubmed/index/train_index.txt")
-    test_id = pubmed_util.read_index_info("/home/datalab/data/pubmed/index/test_index.txt")
-    test_y_label =  pubmed_util.read_label_info("/home/datalab/data/pubmed/label/test_y_label.txt")
-    train_y_label =  pubmed_util.read_label_info("/home/datalab/data/pubmed/label/y_label.txt")
+    feature = pubmed_util.read_feature_info("../pubmed/feature/feature.txt")
+    train_id = pubmed_util.read_index_info("../pubmed/index/train_index.txt")
+    test_id = pubmed_util.read_index_info("../pubmed/index/test_index.txt")
+    test_y_label =  pubmed_util.read_label_info("../pubmed/label/test_y_label.txt")
+    train_y_label =  pubmed_util.read_label_info("../pubmed/label/y_label.txt")
     
     feature = torch.tensor(feature)
     train_id = torch.tensor(train_id)
