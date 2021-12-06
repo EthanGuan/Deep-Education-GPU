@@ -106,9 +106,43 @@ __device__ inline op_scalar_fn get_fn_kernel(op_t op) {
     return op_fn;
 }
 
+
 __global__ void spmm(const csr_t* __restrict__ obj1, float* x, float * y, op_t op, const bool reverse, const bool norm, const int dim) 
 {
-    //TODO
+    int row_idx = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (row_idx >= obj1->v) {
+        return;
+    }
+
+    float* input_ptr = x + row_idx * dim;
+    float* ouput_ptr = y + row_idx * dim;
+
+    vid_t * nebrs_ptr;
+    vid_t degree = obj1->get_nebrs(row_idx, nebrs_ptr);
+
+    if (reverse && norm) {
+        for (vid_t j = 0 ; j < dim ; ++j) {
+            ouput_ptr[j] /= (degree + 1);
+        }
+    }
+
+    for (int j=0; j<dim; j++) {
+        ouput_ptr[j] = input_ptr[j];
+    }
+
+    for (vid_t j = 0 ; j < degree ; j++) {
+        float * cur_nebrs = x + nebrs_ptr[j] * dim;
+        for (vid_t k = 0 ; k < dim ; k++) {
+            ouput_ptr[k] += cur_nebrs[k];
+        }
+    }
+
+    if (!reverse && norm) {
+        for (vid_t j = 0 ; j < dim ; ++j) {
+            ouput_ptr[j] /= (degree + 1);
+        }
+    }
 }
 
 //warp per row (best)
@@ -118,11 +152,13 @@ __global__ void spmm_warp(const csr_t* __restrict__ obj1, float* x, float * y, o
 }
 
 void invoke_spmm(csr_t * obj1, array2d_t < float > & x1, array2d_t < float > & y1, op_t op, bool reverse, bool norm, int dim) {
-    int warp_size=32;
+    //int warp_size=32;
     int block_size=1024;
-    int nBlocks =  0; // TODO 
-    spmm_warp <<<nBlocks,block_size>>> (obj1, x1.data_ptr, y1.data_ptr, op, true, true, dim);
-
+    
+    int nBlocks =  (obj1->v + block_size - 1) / block_size;
+    spmm<<<nBlocks,block_size>>> (obj1, x1.data_ptr, y1.data_ptr, op, true, true, dim);
+    //spmm_warp <<<nBlocks,block_size>>> (obj1, x1.data_ptr, y1.data_ptr, op, true, true, dim);
+    
     cudaDeviceSynchronize();
 }
 
